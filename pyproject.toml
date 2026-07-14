@@ -34,10 +34,10 @@ requires-python = ">=3.11"
 dependencies = []  # zero runtime deps — pure stdlib
 
 [project.urls]
-Homepage   = "https://github.com/mikhail-samoilov/playgress"
-Repository = "https://github.com/mikhail-samoilov/playgress"
-Issues     = "https://github.com/mikhail-samoilov/playgress/issues"
-Changelog  = "https://github.com/mikhail-samoilov/playgress/releases"
+Homepage   = "https://github.com/Samoilov2004/tqrex"
+Repository = "https://github.com/Samoilov2004/tqrex"
+Issues     = "https://github.com/Samoilov2004/tqrex/issues"
+Changelog  = "https://github.com/Samoilov2004/tqrex/releases"
 
 # ── Optional / dev extras ──────────────────────────────────────────────────────
 
