@@ -72,15 +72,15 @@ class InputHandler:
             termios.tcsetattr(fd, termios.TCSADRAIN, old_attrs)
 
     def _run_windows(self) -> None:
-        import msvcrt  # type: ignore[import]
+        import msvcrt
 
         while not self._shutdown.is_set():
-            if not msvcrt.kbhit():
+            if not msvcrt.kbhit():  # type: ignore[attr-defined]
                 time.sleep(0.008)
                 continue
-            ch = msvcrt.getch()
+            ch = msvcrt.getch()  # type: ignore[attr-defined]
             if ch in (b"\xe0", b"\x00"):
-                ext = msvcrt.getch() if msvcrt.kbhit() else b""
+                ext = msvcrt.getch() if msvcrt.kbhit() else b""  # type: ignore[attr-defined]
                 event = _KEY_MAP.get(ch + ext)
             else:
                 event = _KEY_MAP.get(ch)
