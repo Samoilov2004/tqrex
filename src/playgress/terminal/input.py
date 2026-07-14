@@ -1,47 +1,29 @@
-"""Cross-platform non-blocking raw keyboard input."""
-
 from __future__ import annotations
 
 import queue
 import sys
 import threading
-from typing import TYPE_CHECKING
+import time
 
 from playgress.models import InputEvent
 
-if TYPE_CHECKING:
-    pass  # future: import platform-specific types here
-
-# Raw byte sequences → InputEvent mapping (ANSI escape codes + single chars).
 _KEY_MAP: dict[bytes, InputEvent] = {
-    b" ": InputEvent.JUMP,
-    b"\x1b[A": InputEvent.JUMP,  # up-arrow (ANSI)
-    b"\x00H": InputEvent.JUMP,  # up-arrow (Windows scan code)
-    b"\x1b[B": InputEvent.DUCK_START,  # down-arrow (ANSI)
-    b"\x00P": InputEvent.DUCK_START,  # down-arrow (Windows scan code)
-    b"r": InputEvent.RESTART,
-    b"R": InputEvent.RESTART,
-    b"a": InputEvent.TOGGLE_AUTOPLAY,
-    b"A": InputEvent.TOGGLE_AUTOPLAY,
-    b"p": InputEvent.PAUSE,
-    b"P": InputEvent.PAUSE,
-    b"q": InputEvent.QUIT,
-    b"Q": InputEvent.QUIT,
+    b" ":        InputEvent.JUMP,
+    b"\x1b[A":   InputEvent.JUMP,
+    b"\x00H":    InputEvent.JUMP,
+    b"\xe0H":    InputEvent.JUMP,
+    b"\x1b[B":   InputEvent.DUCK_START,
+    b"\x00P":    InputEvent.DUCK_START,
+    b"\xe0P":    InputEvent.DUCK_START,
+    b"r":        InputEvent.RESTART,
+    b"R":        InputEvent.RESTART,
+    b"q":        InputEvent.QUIT,
+    b"Q":        InputEvent.QUIT,
+    b"\x03":     InputEvent.QUIT,
 }
 
 
 class InputHandler:
-    """Reads keypresses in a background daemon thread and pushes InputEvents.
-
-    Architecture:
-        - POSIX: saves/restores terminal attributes via ``termios``; reads with
-          ``select.select()`` so the thread never busy-waits.
-        - Windows: polls ``msvcrt.kbhit()`` with a short sleep (1 ms) to avoid
-          burning CPU.
-        - Duck-release is synthesised: after DOWN is pressed, the handler posts
-          a DUCK_END event on the next read that is *not* a down-arrow, or after
-          a fixed timeout. (Implemented in Phase 2.)
-    """
 
     def __init__(
         self,
@@ -52,29 +34,62 @@ class InputHandler:
         self._shutdown = shutdown
 
     def start(self) -> threading.Thread:
-        """Spawn and return the daemon input thread."""
         t = threading.Thread(target=self._run, name="playgress-input", daemon=True)
         t.start()
         return t
 
     def _run(self) -> None:
-        """Dispatch to the platform-appropriate implementation."""
         if sys.platform == "win32":
             self._run_windows()
         else:
             self._run_posix()
 
     def _run_posix(self) -> None:
-        """POSIX: raw mode + select.select() for zero-latency, zero-spin reads."""
-        # TODO(Phase 2): implement using termios / tty / select
-        pass
+        import os as _os
+        import select
+        import termios
+        import tty
+
+        fd = sys.stdin.fileno()
+        old_attrs = termios.tcgetattr(fd)
+        try:
+            tty.setraw(fd)
+            while not self._shutdown.is_set():
+                ready, _, _ = select.select([fd], [], [], 0.04)
+                if not ready:
+                    continue
+                ch = _os.read(fd, 1)
+                if ch == b"\x1b":
+                    r2, _, _ = select.select([fd], [], [], 0.02)
+                    if r2:
+                        seq = _os.read(fd, 2)
+                        event = _KEY_MAP.get(b"\x1b" + seq)
+                    else:
+                        event = None
+                else:
+                    event = _KEY_MAP.get(ch)
+                self._dispatch(event)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_attrs)
 
     def _run_windows(self) -> None:
-        """Windows: poll msvcrt.kbhit() at ~1 ms intervals."""
-        # TODO(Phase 2): implement using msvcrt
-        pass
+        import msvcrt  # type: ignore[import]
 
-    @staticmethod
-    def _parse(raw: bytes) -> InputEvent | None:
-        """Map a raw byte sequence to an InputEvent, returning None if unmapped."""
-        return _KEY_MAP.get(raw)
+        while not self._shutdown.is_set():
+            if not msvcrt.kbhit():
+                time.sleep(0.008)
+                continue
+            ch = msvcrt.getch()
+            if ch in (b"\xe0", b"\x00"):
+                ext = msvcrt.getch() if msvcrt.kbhit() else b""
+                event = _KEY_MAP.get(ch + ext)
+            else:
+                event = _KEY_MAP.get(ch)
+            self._dispatch(event)
+
+    def _dispatch(self, event: InputEvent | None) -> None:
+        if event is None:
+            return
+        self._queue.put_nowait(event)
+        if event is InputEvent.QUIT:
+            self._shutdown.set()

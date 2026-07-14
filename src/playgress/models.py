@@ -1,32 +1,17 @@
-"""Shared dataclasses and enums used across all playgress modules."""
-
 from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
-# ── Enumerations ───────────────────────────────────────────────────────────────
-
-
-class ObstacleType(Enum):
-    CACTUS_SMALL = auto()
-    CACTUS_LARGE = auto()
-    CACTUS_GROUP = auto()  # two small cacti side-by-side
-    PTERODACTYL = auto()
+from playgress.config import GROUND, INITIAL_SPEED, ObstacleType  # noqa: F401 (re-export)
 
 
 class InputEvent(Enum):
     JUMP = auto()
     DUCK_START = auto()
-    DUCK_END = auto()
     RESTART = auto()
-    TOGGLE_AUTOPLAY = auto()
-    PAUSE = auto()
     QUIT = auto()
-
-
-# ── Geometry ───────────────────────────────────────────────────────────────────
 
 
 @dataclass
@@ -48,8 +33,6 @@ class Vector2D:
 
 @dataclass
 class AABB:
-    """Axis-Aligned Bounding Box — the canonical hitbox primitive."""
-
     x: float
     y: float
     width: float
@@ -64,19 +47,6 @@ class AABB:
         )
 
 
-# ── Game objects ───────────────────────────────────────────────────────────────
-
-
-@dataclass
-class DinoState:
-    position: Vector2D = field(default_factory=lambda: Vector2D(10.0, 0.0))
-    velocity: Vector2D = field(default_factory=lambda: Vector2D(0.0, 0.0))
-    is_jumping: bool = False
-    is_ducking: bool = False
-    is_dead: bool = False
-    animation_frame: int = 0
-
-
 @dataclass
 class Obstacle:
     type: ObstacleType
@@ -86,18 +56,51 @@ class Obstacle:
 
 
 @dataclass
+class DinoState:
+    y: float = float(GROUND)
+    vy: float = 0.0
+    on_ground: bool = True
+    ducking: bool = False
+    duck_frames: int = 0
+    fast_drop: bool = False
+    hang_frames: int = 0
+    dead: bool = False
+    anim_frame: int = 0
+    anim_counter: int = 0
+    position: Vector2D = field(default_factory=lambda: Vector2D(0.0, 0.0))
+
+
+@dataclass
+class ObstacleData:
+    type: ObstacleType
+    x: float
+    top_row: int
+    width: int
+    height: int
+    anim_frame: int = 0
+    anim_counter: int = 0
+
+
+@dataclass
+class CloudData:
+    x: float
+    row: int
+    kind: int
+    speed: float
+
+
+@dataclass
 class GameState:
     dino: DinoState = field(default_factory=DinoState)
-    obstacles: list[Obstacle] = field(default_factory=list)
+    obstacles: list[ObstacleData] = field(default_factory=list)
+    clouds: list[CloudData] = field(default_factory=list)
     score: float = 0.0
-    speed: float = 10.0  # columns per second
-    is_paused: bool = False
-    is_game_over: bool = False
-    autoplay: bool = False
+    hi_score: float = 0.0
+    speed: float = INITIAL_SPEED
+    scroll: float = 0.0
     frame: int = 0
-
-
-# ── Progress tracking ──────────────────────────────────────────────────────────
+    is_dead: bool = False
+    is_done: bool = False
 
 
 @dataclass

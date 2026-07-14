@@ -1,55 +1,103 @@
-"""Gravity, jump impulse, ducking, and AABB collision detection."""
-
 from __future__ import annotations
 
-from playgress.models import AABB, DinoState, Obstacle
+from playgress.config import (
+    ANIM_PERIOD,
+    DINO_COL,
+    DINO_H,
+    DINO_H_DUCK,
+    DINO_W,
+    DUCK_FRAMES,
+    FAST_DROP_V,
+    GRAVITY,
+    GROUND,
+    HANG_FRAMES,
+    JUMP_VELOCITY,
+)
+from playgress.models import AABB, DinoState, ObstacleData
 
-# Standing hitbox is narrower than the sprite to give a fair margin.
-_DINO_STAND_W = 4.0
-_DINO_STAND_H = 5.0
-_DINO_DUCK_W = 6.0
-_DINO_DUCK_H = 2.5
-_DINO_X_OFFSET = 1.0  # horizontal inset from sprite left edge
 
+def apply_physics(dino: DinoState) -> None:
+    if dino.on_ground:
+        if dino.duck_frames > 0:
+            dino.duck_frames -= 1
+            if dino.duck_frames == 0:
+                dino.ducking = False
+        return
 
-def apply_gravity(dino: DinoState) -> None:
-    """Mutate *dino* velocity and position by one frame of gravity."""
-    # TODO(Phase 3): implement
-    pass
+    if dino.fast_drop:
+        dino.vy = FAST_DROP_V
+    elif dino.hang_frames > 0:
+        dino.hang_frames -= 1
+    else:
+        new_vy = dino.vy + GRAVITY
+        if dino.vy < 0.0 <= new_vy:
+            dino.hang_frames = HANG_FRAMES
+            dino.vy = 0.0
+        else:
+            dino.vy = new_vy
+
+    dino.y += dino.vy
+
+    if dino.y >= float(GROUND):
+        dino.y = float(GROUND)
+        dino.vy = 0.0
+        dino.on_ground = True
+        if dino.fast_drop:
+            dino.ducking = True
+            dino.duck_frames = DUCK_FRAMES // 2
+        dino.fast_drop = False
 
 
 def try_jump(dino: DinoState) -> bool:
-    """Apply jump impulse when dino is grounded. Returns True if the jump fired."""
-    # TODO(Phase 3): implement
+    if not dino.on_ground:
+        return False
+    dino.vy = JUMP_VELOCITY
+    dino.on_ground = False
+    dino.hang_frames = 0
+    dino.ducking = False
+    dino.duck_frames = 0
+    dino.fast_drop = False
+    return True
+
+
+def start_duck(dino: DinoState) -> None:
+    if dino.on_ground:
+        dino.ducking = True
+        dino.duck_frames = DUCK_FRAMES
+    else:
+        dino.fast_drop = True
+        dino.hang_frames = 0
+
+
+def advance_anim(dino: DinoState) -> None:
+    dino.anim_counter += 1
+    if dino.anim_counter >= ANIM_PERIOD:
+        dino.anim_counter = 0
+        dino.anim_frame += 1
+
+
+def check_collision(dino: DinoState, obstacles: list[ObstacleData]) -> bool:
+    if not obstacles:
+        return False
+    dbot = int(round(dino.y))
+    dh = DINO_H_DUCK if dino.ducking else DINO_H
+    dtop = dbot - dh + 1
+    dhx1 = DINO_COL + 2
+    dhx2 = DINO_COL + DINO_W - 2
+    for obs in obstacles:
+        obot = obs.top_row + obs.height - 1
+        ohx1 = int(obs.x) + 1
+        ohx2 = int(obs.x) + obs.width - 2
+        if dhx1 <= ohx2 and dhx2 >= ohx1 and dtop <= obot and dbot >= obs.top_row:
+            return True
     return False
 
 
-def set_ducking(dino: DinoState, *, ducking: bool) -> None:
-    """Toggle ducking state; adjust position so the dino stays on the ground."""
-    # TODO(Phase 3): implement
-    pass
-
-
 def get_dino_hitbox(dino: DinoState) -> AABB:
-    """Return the current AABB for the dino (smaller while ducking)."""
-    # TODO(Phase 3): implement with proper offsets
-    w = _DINO_DUCK_W if dino.is_ducking else _DINO_STAND_W
-    h = _DINO_DUCK_H if dino.is_ducking else _DINO_STAND_H
-    return AABB(dino.position.x + _DINO_X_OFFSET, dino.position.y, w, h)
-
-
-def get_obstacle_hitbox(obstacle: Obstacle) -> AABB:
-    """Return the AABB for an obstacle (inset slightly for fairness)."""
-    # TODO(Phase 3): per-type inset values
+    dh = DINO_H_DUCK if dino.ducking else DINO_H
     return AABB(
-        obstacle.position.x + 0.5,
-        obstacle.position.y,
-        obstacle.width - 1.0,
-        obstacle.height,
+        x=float(DINO_COL + 2),
+        y=float(int(round(dino.y)) - dh + 1),
+        width=float(DINO_W - 4),
+        height=float(dh),
     )
-
-
-def check_collision(dino: DinoState, obstacles: list[Obstacle]) -> bool:
-    """Return True if the dino's hitbox intersects any obstacle hitbox."""
-    dino_box = get_dino_hitbox(dino)
-    return any(dino_box.intersects(get_obstacle_hitbox(obs)) for obs in obstacles)

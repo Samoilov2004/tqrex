@@ -1,16 +1,9 @@
 #!/usr/bin/env python3
-"""
-prototype.py  —  playgress PoC v4
-Styled after term-rex (github.com/jianongHe/term-rex).
-
-Keys: SPACE/↑  jump   ·   ↓  duck / fast-drop   ·   R  restart   ·   Q  quit
-"""
 from __future__ import annotations
 
 import os, random, sys, threading, time
 from dataclasses import dataclass, field
 
-# ── ANSI ──────────────────────────────────────────────────────────────────────
 RST   = "\x1b[0m"
 GREEN = "\x1b[32m"
 RED   = "\x1b[31m"
@@ -25,49 +18,39 @@ CLEAR = "\x1b[2J\x1b[H"
 def at(r: int, c: int = 1) -> str: return f"\x1b[{r};{c}H"
 def eol() -> str:                   return "\x1b[K"
 
-# ── Terminal width ─────────────────────────────────────────────────────────────
 try:
     W, _ = os.get_terminal_size()
 except OSError:
     W = 80
 W = min(W, 120)
 
-# ── Layout (1-indexed terminal rows) ──────────────────────────────────────────
-#  Row  1      Score / HI
-#  Rows 2-14   Game area  (game coords 0-12)
-#  Row 15      Ground line  ___________
-#  Row 16      Ground deco  . , ` .
-#  Row 17      Progress bar ████░░  73.0%
-#  Row 18      Status / description
 GAME_H  = 13
-GROUND  = GAME_H - 1   # = 12
+GROUND  = GAME_H - 1
 
 T_SCORE = 1
 T_GAME  = 2
-T_GNDLN = T_GAME + GAME_H   # 15
-T_GNDEC = T_GNDLN + 1       # 16
-T_BAR   = T_GNDEC + 1       # 17
-T_DESC  = T_BAR + 1         # 18
+T_GNDLN = T_GAME + GAME_H
+T_GNDEC = T_GNDLN + 1
+T_BAR   = T_GNDEC + 1
+T_DESC  = T_BAR + 1
 TOTAL   = T_DESC
 
 DINO_X = 4
 
-# ── Physics (60 FPS, derived from term-rex config.go) ─────────────────────────
 FPS      = 60
-_JH      = 5               # jump height in rows
-_JD      = FPS // 4        # 15 frames to apex
-GRAV     = 2.0 * _JH / (_JD * _JD)   # ≈ 0.0444
-JUMP_V   = -(2.0 * _JH / _JD)        # ≈ -0.667
-FAST_V   = abs(JUMP_V) * 0.8         # fast-drop velocity (downward)
+_JH      = 5
+_JD      = FPS // 4
+GRAV     = 2.0 * _JH / (_JD * _JD)
+JUMP_V   = -(2.0 * _JH / _JD)
+FAST_V   = abs(JUMP_V) * 0.8
 HANG_DUR = 2
-DUCK_DUR = FPS // 2 + 1   # 31 frames
-ANIM_PER = FPS // 12      # 5 frames between animation frames
+DUCK_DUR = FPS // 2 + 1
+ANIM_PER = FPS // 12
 
-_SF    = 24.0 / FPS        # 0.4  — match original 24 fps visual speed
-SPD0   = 1.4 * _SF         # ≈ 0.56 cells/frame
-SPDMAX = 3.5 * _SF         # ≈ 1.40 cells/frame
+_SF    = 24.0 / FPS
+SPD0   = 1.4 * _SF
+SPDMAX = 3.5 * _SF
 
-# stage speed thresholds
 STAGES: list[tuple[int, float]] = [
     (0,    1.4 * _SF),
     (100,  1.8 * _SF),
@@ -81,17 +64,15 @@ STAGES: list[tuple[int, float]] = [
     (6000, 3.5 * _SF),
 ]
 
-# ── Sprites  (spaces = transparent) ───────────────────────────────────────────
-# Dino  12w × 5h (standing) / 12w × 4h (ducking)
 DINO_RUN = [
-    [   # frame 0 — right leg forward
+    [
         "       ++++ ",
         "++    ++Q+++",
         " + +++++_ww ",
         "  ++++++    ",
         "   |   |    ",
     ],
-    [   # frame 1 — left leg forward
+    [
         "       ++++ ",
         " +    ++Q+++",
         " + +++++_ww ",
@@ -124,22 +105,19 @@ DINO_W    = 12
 DINO_H    = 5
 DINO_H_DK = 4
 
-# Cacti (RED)
-CACT_SINGLE = [[" | ", "/|\\", " | "]]           # 3w × 3h
-CACT_SHORT  = [["/:\\/:\\", " | |"]]              # 6w × 2h
-CACT_GROUP  = [["    |  ", "/|\\/|\\", " |  |"]]  # 7w × 3h
+CACT_SINGLE = [[" | ", "/|\\", " | "]]
+CACT_SHORT  = [["/:\\/:\\", " | |"]]
+CACT_GROUP  = [["    |  ", "/|\\/|\\", " |  |"]]
 
-# Birds
-BIRD_S = [   # small bird  5w × 3h  (YEL)
+BIRD_S = [
     [" |   ", "<o=- ", " |   "],
     [" /   ", "<O=- ", " \\   "],
 ]
-BIRD_B = [   # big bird  8w × 4h  (MAG)
+BIRD_B = [
     ["  /\\    ", " /  \\   ", "<ooo=-- ", " \\__/   "],
     ["  /\\    ", " /  \\   ", "<OOO=-- ", " \\__/   "],
 ]
 
-# Clouds (3 variants, 11w × 3h, drawn in GRAY)
 CLOUD_SPRITES = [
     ["   .--.    ", " .(    ).  ", "(___.__)   "],
     ["  .-.      ", " (   ).    ", "(___(__)   "],
@@ -148,26 +126,19 @@ CLOUD_SPRITES = [
 CLOUD_W = 11
 CLOUD_H = 3
 
-# Bird / cactus rows in game coords (0 = top of game area, 12 = ground)
-# Dino standing occupies rows (GROUND-DINO_H+1) to GROUND = 8..12
-# Dino ducking  occupies rows (GROUND-DINO_H_DK+1) to GROUND = 9..12
-CACT_SINGLE_TOP = GROUND - 3 + 1   # 10  (3 tall, bottom at 12)
-CACT_SHORT_TOP  = GROUND - 2 + 1   # 11  (2 tall)
-CACT_GROUP_TOP  = GROUND - 3 + 1   # 10  (3 tall)
+CACT_SINGLE_TOP = GROUND - 3 + 1
+CACT_SHORT_TOP  = GROUND - 2 + 1
+CACT_GROUP_TOP  = GROUND - 3 + 1
 
-# LOW bird rows 10-12: standing & ducking dino both collide → must jump
-# HIGH bird rows 6-8:  standing dino collides at row 8, ducking top=9 → must duck
-BIRD_ROW_LOW  = GROUND - 2   # 10
-BIRD_ROW_HIGH = GROUND - 6   # 6
-BIG_BIRD_ROW  = GROUND - 7   # 5   (4-tall, rows 5-8, must duck)
+BIRD_ROW_LOW  = GROUND - 2
+BIRD_ROW_HIGH = GROUND - 6
+BIG_BIRD_ROW  = GROUND - 7
 
-# ── Pre-generated scrolling ground ────────────────────────────────────────────
 random.seed(42)
 _GND  = ''.join(random.choice('_' * 8 + '=~-^') for _ in range(W * 6))
 _DECO = ''.join(random.choice(' ' * 6 + ".,',`-") for _ in range(W * 6))
 random.seed()
 
-# ── Data classes ──────────────────────────────────────────────────────────────
 @dataclass
 class Obs:
     x:        float
@@ -181,9 +152,9 @@ class Obs:
 @dataclass
 class Cloud:
     x:     float
-    row:   int    # top game row, 1-3
-    kind:  int    # index into CLOUD_SPRITES
-    speed: float  # cols/frame
+    row:   int
+    kind:  int
+    speed: float
 
 @dataclass
 class G:
@@ -215,23 +186,22 @@ _duck = threading.Event()
 _rst  = threading.Event()
 _quit = threading.Event()
 
-# ── Input ──────────────────────────────────────────────────────────────────────
 def _posix_input() -> None:
-    import select, termios, tty
+    import os as _os, select, termios, tty
     fd  = sys.stdin.fileno()
     old = termios.tcgetattr(fd)
     try:
         tty.setraw(fd)
         while not _quit.is_set():
-            r, _, _ = select.select([sys.stdin], [], [], 0.04)
+            r, _, _ = select.select([fd], [], [], 0.04)
             if not r:
                 continue
-            ch = sys.stdin.buffer.read(1)
+            ch = _os.read(fd, 1)
             if   ch == b' ':                   _jump.set()
             elif ch == b'\x1b':
-                r2, _, _ = select.select([sys.stdin], [], [], 0.02)
+                r2, _, _ = select.select([fd], [], [], 0.02)
                 if r2:
-                    seq = sys.stdin.buffer.read(2)
+                    seq = _os.read(fd, 2)
                     if   seq == b'[A': _jump.set()
                     elif seq == b'[B': _duck.set()
             elif ch in (b'r', b'R'):           _rst.set()
@@ -257,7 +227,6 @@ def start_input() -> None:
     fn = _win_input if sys.platform == 'win32' else _posix_input
     threading.Thread(target=fn, daemon=True, name='inp').start()
 
-# ── Helpers ────────────────────────────────────────────────────────────────────
 def _target_spd(score: float) -> float:
     spd = SPD0
     for thr, s in STAGES:
@@ -277,7 +246,6 @@ def _init_clouds() -> list[Cloud]:
     step = W // 3
     return [_new_cloud(float(step * i + random.randint(0, step // 2))) for i in range(3)]
 
-# ── Obstacle spawn ─────────────────────────────────────────────────────────────
 def _spawn(g: G) -> None:
     rightmost = max((o.x + o.width for o in g.obs), default=-1.0)
     min_gap   = max(30, int(48 - g.spd * 8))
@@ -299,7 +267,6 @@ def _spawn(g: G) -> None:
         elif t < 0.55: g.obs.append(Obs(float(W), BIRD_ROW_LOW,   BIRD_S, 5, YEL))
         else:           g.obs.append(Obs(float(W), BIRD_ROW_HIGH,  BIRD_S, 5, YEL))
 
-# ── Collision ──────────────────────────────────────────────────────────────────
 def _dino_h(g: G) -> int:
     return DINO_H_DK if g.ducking else DINO_H
 
@@ -325,12 +292,10 @@ def _reset(g: G) -> None:
     g.score = 0.0; g.spd = SPD0; g.obs.clear()
     g.clouds = _init_clouds()
 
-# ── Renderer ───────────────────────────────────────────────────────────────────
 def _game_row(g: G, gr: int) -> str:
     chars  = [' '] * W
     colors = ['']  * W
 
-    # clouds (background, GRAY)
     for cl in g.clouds:
         if cl.row <= gr <= cl.row + CLOUD_H - 1:
             spr = CLOUD_SPRITES[cl.kind]
@@ -340,7 +305,6 @@ def _game_row(g: G, gr: int) -> str:
                 if ch != ' ' and 0 <= pos < W:
                     chars[pos] = ch; colors[pos] = GRAY
 
-    # dino (GREEN)
     dbot = int(round(g.dy))
     dh   = _dino_h(g)
     dtop = dbot - dh + 1
@@ -354,7 +318,6 @@ def _game_row(g: G, gr: int) -> str:
             if ch != ' ' and 0 <= pos < W:
                 chars[pos] = ch; colors[pos] = GREEN
 
-    # obstacles
     for obs in g.obs:
         spr = obs.frames[obs.anim % len(obs.frames)]
         ob  = obs.top_row
@@ -365,7 +328,6 @@ def _game_row(g: G, gr: int) -> str:
                 if ch != ' ' and 0 <= pos < W:
                     chars[pos] = ch; colors[pos] = obs.color
 
-    # encode with minimal color switching
     out, cur = [], ''
     for ch, clr in zip(chars, colors):
         if clr != cur:
@@ -377,33 +339,27 @@ def _game_row(g: G, gr: int) -> str:
 def _render(g: G) -> None:
     p: list[str] = []
 
-    # Row 1: score
     sc     = f"Score: {BOLD}{int(g.score):05d}{RST}"
     hi     = f"HI: {int(g.hi):05d}"
     sc_raw = f"Score: {int(g.score):05d}"
     pad    = max(W - len(sc_raw) - len(hi), 2)
     p.append(at(T_SCORE) + sc + ' ' * pad + hi + eol())
 
-    # Rows 2-14: game area
     for gr in range(GAME_H):
         p.append(at(T_GAME + gr) + _game_row(g, gr) + eol())
 
-    # Row 15: ground line
     off  = int(g.scroll) % (W * 6)
     gnd  = (_GND  * 2)[off: off + W]
     deco = (_DECO * 2)[off: off + W]
     p.append(at(T_GNDLN) + RST + gnd + eol())
 
-    # Row 16: deco
     p.append(at(T_GNDEC) + GRAY + deco + RST + eol())
 
-    # Row 17: progress bar
     bw  = W - 9
     fil = round(g.prog * bw)
     p.append(at(T_BAR) + GREEN + '█' * fil + GRAY + '░' * (bw - fil)
              + RST + f' {g.prog * 100:5.1f}%' + eol())
 
-    # Row 18: status
     if g.dead:
         msg = '  GAME OVER  ·  R: restart  ·  Q: quit'
     elif g.done:
@@ -416,7 +372,6 @@ def _render(g: G) -> None:
     sys.stdout.write(''.join(p))
     sys.stdout.flush()
 
-# ── Game loop ──────────────────────────────────────────────────────────────────
 def game_loop() -> None:
     last = time.monotonic()
     while not _quit.is_set():
@@ -433,7 +388,6 @@ def game_loop() -> None:
 
             if not g.dead:
 
-                # input
                 if _jump.is_set():
                     _jump.clear()
                     if g.grnd:
@@ -447,13 +401,11 @@ def game_loop() -> None:
                     else:
                         g.fastdrop = True; g.hang = 0
 
-                # duck timer
                 if g.duck_fr > 0:
                     g.duck_fr -= 1
                     if g.duck_fr == 0:
                         g.ducking = False
 
-                # physics
                 if not g.grnd:
                     if g.fastdrop:
                         g.dvy = FAST_V
@@ -472,7 +424,6 @@ def game_loop() -> None:
                             g.ducking = True; g.duck_fr = DUCK_DUR // 2
                         g.fastdrop = False
 
-                # scroll obstacles
                 for obs in g.obs:
                     obs.x -= g.spd
                     obs.anim_cnt += 1
@@ -482,14 +433,12 @@ def game_loop() -> None:
                 g.obs = [o for o in g.obs if o.x + o.width > 0]
                 _spawn(g)
 
-                # scroll clouds
                 for cl in g.clouds:
                     cl.x -= cl.speed
                 for i, cl in enumerate(g.clouds):
                     if cl.x + CLOUD_W < 0:
                         g.clouds[i] = _new_cloud(float(W + random.randint(10, 40)))
 
-                # score / speed / collision
                 if _collide(g):
                     g.dead = True
                 else:
@@ -507,7 +456,6 @@ def game_loop() -> None:
         if sleep > 0:
             time.sleep(sleep)
 
-# ── Main (simulated workload) ──────────────────────────────────────────────────
 def main() -> None:
     sys.stdout.write(HIDE + CLEAR)
     sys.stdout.flush()
