@@ -36,7 +36,6 @@ from tqrex.models import GameState
 
 
 class Renderer:
-
     def __init__(self, cols: int) -> None:
         self._cols = cols
 
@@ -75,8 +74,8 @@ class Renderer:
             rows[T_GAME - 1 + gr] = self._game_row(game, gr)
 
         off = int(game.scroll) % len(GROUND_LINE)
-        rows[T_GNDLN - 1] = RST + (GROUND_LINE * 2)[off: off + self._cols]
-        rows[T_GNDEC - 1] = GRAY + (GROUND_DECO * 2)[off: off + self._cols] + RST
+        rows[T_GNDLN - 1] = RST + (GROUND_LINE * 2)[off : off + self._cols]
+        rows[T_GNDEC - 1] = GRAY + (GROUND_DECO * 2)[off : off + self._cols] + RST
 
         rows[T_BAR - 1] = self._progress_row(fraction)
         rows[T_DESC - 1] = self._status_row(game, description, eta)

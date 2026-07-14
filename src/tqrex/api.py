@@ -87,7 +87,6 @@ def track(
 
 
 class Progress:
-
     def __init__(
         self,
         total: int,
@@ -108,9 +107,7 @@ class Progress:
 
     def update(self, n: int = 1) -> None:
         with self._lock:
-            self._state.completed = min(
-                self._state.completed + n, self._state.total
-            )
+            self._state.completed = min(self._state.completed + n, self._state.total)
 
     def set_description(self, text: str) -> None:
         with self._lock:
@@ -129,9 +126,7 @@ class Progress:
                 renderer=self._renderer,
                 cols=cols,
             )
-            self._input = InputHandler(
-                event_queue=input_queue, shutdown=self._shutdown
-            )
+            self._input = InputHandler(event_queue=input_queue, shutdown=self._shutdown)
             self._renderer.setup()
             self._input.start()
             self._game.start()

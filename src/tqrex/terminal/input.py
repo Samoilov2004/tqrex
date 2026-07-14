@@ -8,23 +8,22 @@ import time
 from tqrex.models import InputEvent
 
 _KEY_MAP: dict[bytes, InputEvent] = {
-    b" ":        InputEvent.JUMP,
-    b"\x1b[A":   InputEvent.JUMP,
-    b"\x00H":    InputEvent.JUMP,
-    b"\xe0H":    InputEvent.JUMP,
-    b"\x1b[B":   InputEvent.DUCK_START,
-    b"\x00P":    InputEvent.DUCK_START,
-    b"\xe0P":    InputEvent.DUCK_START,
-    b"r":        InputEvent.RESTART,
-    b"R":        InputEvent.RESTART,
-    b"q":        InputEvent.QUIT,
-    b"Q":        InputEvent.QUIT,
-    b"\x03":     InputEvent.QUIT,
+    b" ": InputEvent.JUMP,
+    b"\x1b[A": InputEvent.JUMP,
+    b"\x00H": InputEvent.JUMP,
+    b"\xe0H": InputEvent.JUMP,
+    b"\x1b[B": InputEvent.DUCK_START,
+    b"\x00P": InputEvent.DUCK_START,
+    b"\xe0P": InputEvent.DUCK_START,
+    b"r": InputEvent.RESTART,
+    b"R": InputEvent.RESTART,
+    b"q": InputEvent.QUIT,
+    b"Q": InputEvent.QUIT,
+    b"\x03": InputEvent.QUIT,
 }
 
 
 class InputHandler:
-
     def __init__(
         self,
         event_queue: queue.Queue[InputEvent],

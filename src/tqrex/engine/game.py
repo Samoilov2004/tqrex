@@ -28,7 +28,6 @@ from tqrex.terminal.render import Renderer
 
 
 class GameLoop:
-
     def __init__(
         self,
         progress: ProgressState,
@@ -132,9 +131,7 @@ class GameLoop:
             cl.x -= cl.speed
         for i, cl in enumerate(g.clouds):
             if cl.x + CLOUD_W < 0:
-                g.clouds[i] = self._new_cloud(
-                    float(self._cols + random.randint(10, 40))
-                )
+                g.clouds[i] = self._new_cloud(float(self._cols + random.randint(10, 40)))
 
     def _init_clouds(self) -> list[CloudData]:
         step = max(1, self._cols // 3)

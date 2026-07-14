@@ -2,7 +2,7 @@
 
 > A progress bar that lets you play the Chrome T-Rex game in your terminal.
 
-![demo](demo.gif)
+<img src="https://raw.githubusercontent.com/Samoilov2004/tqrex/main/demo.gif" width="100%">
 
 Your long-running script doesn't have to be boring. **tqrex** wraps any
 iterable in a full T-Rex side-scroller — jump cacti, dodge birds, rack up a

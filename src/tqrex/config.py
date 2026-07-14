@@ -83,10 +83,10 @@ INITIAL_SPEED: float = 1.4 * _SF
 MAX_SPEED: float = 3.5 * _SF
 
 SPEED_STAGES: list[tuple[int, float]] = [
-    (0,    1.4 * _SF),
-    (100,  1.8 * _SF),
-    (300,  2.2 * _SF),
-    (500,  2.8 * _SF),
+    (0, 1.4 * _SF),
+    (100, 1.8 * _SF),
+    (300, 2.2 * _SF),
+    (500, 2.8 * _SF),
     (1000, 3.0 * _SF),
     (2500, 3.2 * _SF),
     (3000, 3.3 * _SF),
@@ -203,18 +203,18 @@ CLOUD_H: int = 3
 
 OBSTACLE_SPRITE: dict[ObstacleType, Sprite] = {
     ObstacleType.CACTUS_SINGLE: CACTUS_SINGLE,
-    ObstacleType.CACTUS_SHORT:  CACTUS_SHORT,
-    ObstacleType.CACTUS_GROUP:  CACTUS_GROUP,
-    ObstacleType.BIRD_SMALL:    BIRD_SMALL,
-    ObstacleType.BIRD_BIG:      BIRD_BIG,
+    ObstacleType.CACTUS_SHORT: CACTUS_SHORT,
+    ObstacleType.CACTUS_GROUP: CACTUS_GROUP,
+    ObstacleType.BIRD_SMALL: BIRD_SMALL,
+    ObstacleType.BIRD_BIG: BIRD_BIG,
 }
 
 OBSTACLE_COLOR: dict[ObstacleType, str] = {
     ObstacleType.CACTUS_SINGLE: RED,
-    ObstacleType.CACTUS_SHORT:  RED,
-    ObstacleType.CACTUS_GROUP:  RED,
-    ObstacleType.BIRD_SMALL:    YEL,
-    ObstacleType.BIRD_BIG:      MAG,
+    ObstacleType.CACTUS_SHORT: RED,
+    ObstacleType.CACTUS_GROUP: RED,
+    ObstacleType.BIRD_SMALL: YEL,
+    ObstacleType.BIRD_BIG: MAG,
 }
 
 _ground_rng: random.Random = random.Random(42)
