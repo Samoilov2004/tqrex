@@ -1,10 +1,10 @@
-# playgress
+# tqrex
 
 > A progress bar that lets you play the Chrome T-Rex game in your terminal.
 
 ![demo](demo.gif)
 
-Your long-running script doesn't have to be boring. **playgress** wraps any
+Your long-running script doesn't have to be boring. **tqrex** wraps any
 iterable in a full T-Rex side-scroller — jump cacti, dodge birds, rack up a
 high score — while your real work happens in the background. When the task
 finishes the game keeps running until you decide to quit.
@@ -29,14 +29,14 @@ finishes the game keeps running until you decide to quit.
 ## Installation
 
 ```bash
-pip install playgress
+pip install tqrex
 ```
 
 Or for local development:
 
 ```bash
-git clone https://github.com/mikhail-samoilov/playgress
-cd playgress
+git clone https://github.com/mikhail-samoilov/tqrex
+cd tqrex
 pip install -e ".[dev]"
 ```
 
@@ -47,11 +47,11 @@ pip install -e ".[dev]"
 ### Drop-in replacement for `tqdm`
 
 ```python
-import time
+import tqrex
 from playgress import track
 
 for item in track(range(100), description="Processing"):
-    time.sleep(0.05)
+    tqrex.sleep(0.05)
 ```
 
 ### Any iterable works
@@ -96,78 +96,3 @@ for epoch in track(range(200), description="Training", autoplay=True):
 
 > **Note:** The game keeps running after all items are processed so you can
 > finish your current run. Press **Q** when you're done.
-
----
-
-## Themes
-
-The default theme uses prototype-verified ASCII art that renders crisply in
-every monospace font:
-
-```
-       ++++          /|\/|\       <o=-
-++    ++Q+++          |  |          |
- + +++++_ww
-  ++++++
-   |   |
-```
-
-An `EMOJI` theme (`theme=Theme.EMOJI`) for full Unicode width terminals is on
-the roadmap.
-
----
-
-## API reference
-
-### `track(iterable, *, description, total, theme, autoplay, disable)`
-
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `iterable` | `Iterable[T]` | — | Items to iterate over |
-| `description` | `str` | `"Processing..."` | Status line label |
-| `total` | `int \| None` | `None` | Item count; auto-inferred from `len()` |
-| `theme` | `Theme` | `Theme.AUTO` | Sprite theme |
-| `autoplay` | `bool` | `False` | Enable AI controller |
-| `disable` | `bool` | `False` | Skip game; yield items silently |
-
-Returns a generator that yields items from `iterable` unchanged.
-
-### `Progress(total, description, theme, autoplay)`
-
-| Method | Description |
-|--------|-------------|
-| `update(n=1)` | Advance by *n* steps (thread-safe) |
-| `set_description(text)` | Update the status line label |
-| `fraction` | Current progress as a float in `[0, 1]` |
-
----
-
-## CI / non-interactive environments
-
-When `stdout` is not a TTY (piped output, GitHub Actions, `pytest`) the game
-is automatically bypassed and items are yielded with zero overhead. No
-`disable=True` guard needed.
-
----
-
-## How it works
-
-```
-Main thread          Game thread (60 FPS)     Input thread
-──────────           ────────────────────     ────────────
-for item in track():
-  yield item    ←→   read ProgressState  ←←   push InputEvent
-  completed += 1     run physics               (termios raw mode /
-                     render diff frame          msvcrt poll)
-shutdown.wait()
-```
-
-Three threads, two shared objects: a `ProgressState` (protected by a
-`threading.Lock`) and a `queue.Queue[InputEvent]` (lock-free). The game thread
-owns all `GameState` mutations — no other thread touches it.
-
----
-
-## License
-
-MIT — see [LICENSE](LICENSE).

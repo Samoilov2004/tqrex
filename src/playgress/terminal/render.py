@@ -18,7 +18,6 @@ from playgress.config import (
     GAME_H,
     GRAY,
     GREEN,
-    GROUND,
     GROUND_DECO,
     GROUND_LINE,
     HIDE_CURSOR,
@@ -34,7 +33,6 @@ from playgress.config import (
     T_SCORE,
     TOTAL_ROWS,
     ansi_at,
-    ansi_eol,
 )
 from playgress.models import GameState
 
@@ -170,7 +168,7 @@ class Renderer:
 def _encode_row(chars: list[str], colors: list[str]) -> str:
     out: list[str] = []
     cur = ""
-    for ch, clr in zip(chars, colors):
+    for ch, clr in zip(chars, colors, strict=True):
         if clr != cur:
             out.append(clr if clr else RST)
             cur = clr
