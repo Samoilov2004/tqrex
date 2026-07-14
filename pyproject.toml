@@ -6,7 +6,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tqrex"
-version = "0.1.0"
+version = "0.1.1"
 description = "A progress bar that lets you play the Chrome T-Rex game in your terminal"
 readme = "README.md"
 license = { file = "LICENSE" }
