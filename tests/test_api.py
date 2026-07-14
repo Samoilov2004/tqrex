@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from playgress import Progress, track
-from playgress.config import Theme
+from tqrex import Progress, track
+from tqrex.config import Theme
 
 
 def test_track_yields_all_items() -> None:

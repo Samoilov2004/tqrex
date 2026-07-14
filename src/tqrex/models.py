@@ -4,7 +4,7 @@ import time
 from dataclasses import dataclass, field
 from enum import Enum, auto
 
-from playgress.config import GROUND, INITIAL_SPEED, ObstacleType  # noqa: F401 (re-export)
+from tqrex.config import GROUND, INITIAL_SPEED, ObstacleType  # noqa: F401 (re-export)
 
 
 class InputEvent(Enum):

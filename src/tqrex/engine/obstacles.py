@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import random
 
-from playgress.config import (
+from tqrex.config import (
     ANIM_PERIOD,
     BIG_BIRD_ROW,
     BIRD_ROW_HIGH,
@@ -14,7 +14,7 @@ from playgress.config import (
     OBSTACLE_SPRITE,
     ObstacleType,
 )
-from playgress.models import ObstacleData
+from tqrex.models import ObstacleData
 
 
 def spawn_obstacle(score: float, speed: float, cols: int) -> ObstacleData:

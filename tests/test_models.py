@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import time
 
-from playgress.models import ProgressState, Vector2D
+from tqrex.models import ProgressState, Vector2D
 
 
 def test_vector2d_add() -> None:

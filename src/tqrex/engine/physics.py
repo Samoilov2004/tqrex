@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from playgress.config import (
+from tqrex.config import (
     ANIM_PERIOD,
     DINO_COL,
     DINO_H,
@@ -13,7 +13,7 @@ from playgress.config import (
     HANG_FRAMES,
     JUMP_VELOCITY,
 )
-from playgress.models import AABB, DinoState, ObstacleData
+from tqrex.models import AABB, DinoState, ObstacleData
 
 
 def apply_physics(dino: DinoState) -> None:

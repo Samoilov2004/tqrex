@@ -5,7 +5,7 @@ import sys
 import threading
 import time
 
-from playgress.models import InputEvent
+from tqrex.models import InputEvent
 
 _KEY_MAP: dict[bytes, InputEvent] = {
     b" ":        InputEvent.JUMP,
@@ -34,7 +34,7 @@ class InputHandler:
         self._shutdown = shutdown
 
     def start(self) -> threading.Thread:
-        t = threading.Thread(target=self._run, name="playgress-input", daemon=True)
+        t = threading.Thread(target=self._run, name="tqrex-input", daemon=True)
         t.start()
         return t
 

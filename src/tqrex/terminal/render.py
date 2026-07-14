@@ -3,18 +3,16 @@ from __future__ import annotations
 import os
 import sys
 
-from playgress.config import (
+from tqrex.config import (
     BOLD,
     CLOUD_H,
     CLOUD_SPRITES,
-    CLOUD_W,
     DINO_COL,
     DINO_DEAD,
     DINO_DUCK,
     DINO_H,
     DINO_H_DUCK,
     DINO_RUN,
-    DINO_W,
     GAME_H,
     GRAY,
     GREEN,
@@ -34,7 +32,7 @@ from playgress.config import (
     TOTAL_ROWS,
     ansi_at,
 )
-from playgress.models import GameState
+from tqrex.models import GameState
 
 
 class Renderer:

@@ -5,8 +5,7 @@ import random
 import threading
 import time
 
-from playgress.config import (
-    CLOUD_H,
+from tqrex.config import (
     CLOUD_SPEED_SCALE,
     CLOUD_SPRITES,
     CLOUD_W,
@@ -16,10 +15,16 @@ from playgress.config import (
     SCORE_PER_FRAME,
     SPEED_STAGES,
 )
-from playgress.engine.obstacles import advance_obstacles, should_spawn, spawn_obstacle
-from playgress.engine.physics import advance_anim, apply_physics, check_collision, start_duck, try_jump
-from playgress.models import CloudData, DinoState, GameState, InputEvent, ProgressState
-from playgress.terminal.render import Renderer
+from tqrex.engine.obstacles import advance_obstacles, should_spawn, spawn_obstacle
+from tqrex.engine.physics import (
+    advance_anim,
+    apply_physics,
+    check_collision,
+    start_duck,
+    try_jump,
+)
+from tqrex.models import CloudData, DinoState, GameState, InputEvent, ProgressState
+from tqrex.terminal.render import Renderer
 
 
 class GameLoop:
@@ -42,7 +47,7 @@ class GameLoop:
         self._state = GameState(clouds=self._init_clouds())
 
     def start(self) -> threading.Thread:
-        t = threading.Thread(target=self.run, name="playgress-game", daemon=True)
+        t = threading.Thread(target=self.run, name="tqrex-game", daemon=True)
         t.start()
         return t
 
@@ -84,15 +89,12 @@ class GameLoop:
         for event in events:
             if event is InputEvent.QUIT:
                 self._shutdown.set()
-            elif event is InputEvent.RESTART:
-                if g.is_dead or g.is_done:
-                    self._reset(g)
-            elif event is InputEvent.JUMP:
-                if not g.is_dead:
-                    try_jump(g.dino)
-            elif event is InputEvent.DUCK_START:
-                if not g.is_dead:
-                    start_duck(g.dino)
+            elif event is InputEvent.RESTART and (g.is_dead or g.is_done):
+                self._reset(g)
+            elif event is InputEvent.JUMP and not g.is_dead:
+                try_jump(g.dino)
+            elif event is InputEvent.DUCK_START and not g.is_dead:
+                start_duck(g.dino)
 
     def _update(self, g: GameState) -> None:
         apply_physics(g.dino)

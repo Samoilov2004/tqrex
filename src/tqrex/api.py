@@ -7,11 +7,11 @@ import threading
 from collections.abc import Generator, Iterable
 from typing import TypeVar
 
-from playgress.config import Theme
-from playgress.engine.game import GameLoop
-from playgress.models import InputEvent, ProgressState
-from playgress.terminal.input import InputHandler
-from playgress.terminal.render import Renderer
+from tqrex.config import Theme
+from tqrex.engine.game import GameLoop
+from tqrex.models import InputEvent, ProgressState
+from tqrex.terminal.input import InputHandler
+from tqrex.terminal.render import Renderer
 
 T = TypeVar("T")
 

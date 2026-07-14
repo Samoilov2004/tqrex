@@ -4,10 +4,10 @@ from __future__ import annotations
 
 import pytest
 
-from playgress.engine.physics import (
+from tqrex.engine.physics import (
     check_collision,
 )
-from playgress.models import AABB, DinoState, Obstacle, ObstacleType, Vector2D
+from tqrex.models import AABB, DinoState, Obstacle, ObstacleType, Vector2D
 
 # ── AABB.intersects ────────────────────────────────────────────────────────────
 

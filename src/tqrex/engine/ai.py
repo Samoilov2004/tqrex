@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from playgress.config import (
+from tqrex.config import (
     BIRD_ROW_HIGH,
     DINO_COL,
     DINO_W,
     ObstacleType,
 )
-from playgress.models import DinoState, InputEvent, ObstacleData
+from tqrex.models import DinoState, InputEvent, ObstacleData
 
 _DINO_HITBOX_RIGHT: float = float(DINO_COL + DINO_W - 2)
 
