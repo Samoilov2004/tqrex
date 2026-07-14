@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 # ── Project metadata ───────────────────────────────────────────────────────────
 
 [project]
-name = "playgress"
+name = "tqrex"
 version = "0.1.0"
 description = "A progress bar that lets you play the Chrome T-Rex game in your terminal"
 readme = "README.md"
