@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import pytest
-
 from tqrex.engine.physics import (
     check_collision,
 )
-from tqrex.models import AABB, DinoState, Obstacle, ObstacleType, Vector2D
+from tqrex.models import AABB, DinoState, ObstacleData, ObstacleType, Vector2D
 
 # ── AABB.intersects ────────────────────────────────────────────────────────────
 
@@ -35,15 +33,16 @@ def test_aabb_no_overlap() -> None:
 
 
 def _make_dino(x: float, y: float) -> DinoState:
-    return DinoState(position=Vector2D(x, y))
+    return DinoState(y=y, position=Vector2D(x, y))
 
 
-def _make_cactus(x: float, y: float) -> Obstacle:
-    return Obstacle(
-        type=ObstacleType.CACTUS_SMALL,
-        position=Vector2D(x, y),
+def _make_cactus(x: float, y: int) -> ObstacleData:
+    return ObstacleData(
+        type=ObstacleType.CACTUS_SINGLE,
+        x=x,
+        top_row=y,
         width=3,
-        height=4,
+        height=3,
     )
 
 
@@ -52,19 +51,13 @@ def test_no_obstacles_no_collision() -> None:
     assert not check_collision(dino, [])
 
 
-# NOTE: full collision tests are enabled in Phase 3 once physics coordinates
-# are finalised. Placeholder below documents the expected contract.
-
-
-@pytest.mark.skip(reason="physics coordinates finalised in Phase 3")
 def test_direct_overlap_is_collision() -> None:
-    dino = _make_dino(10.0, 4.0)
-    cactus = _make_cactus(10.5, 4.0)
+    dino = _make_dino(0.0, 12.0)
+    cactus = _make_cactus(10.5, 10)
     assert check_collision(dino, [cactus])
 
 
-@pytest.mark.skip(reason="physics coordinates finalised in Phase 3")
 def test_obstacle_far_away_no_collision() -> None:
-    dino = _make_dino(10.0, 4.0)
-    cactus = _make_cactus(50.0, 4.0)
+    dino = _make_dino(0.0, 12.0)
+    cactus = _make_cactus(50.0, 10)
     assert not check_collision(dino, [cactus])
