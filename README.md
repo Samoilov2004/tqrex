@@ -14,11 +14,10 @@ finishes the game keeps running until you decide to quit.
 ## Features
 
 - **Zero runtime dependencies** — pure Python standard library
-- **Drop-in `tqdm` replacement** — `track()` has the same call signature
+- **Familiar iterable API** — wrap any iterable with `track()`
 - **`Progress` context manager** — for manual update control
 - **60 FPS physics** — faithful gravity, jump arc, and speed curve from the
   original Chrome dino
-- **Autoplay AI** — built-in geometric look-ahead controller (`autoplay=True`)
 - **Double-buffered renderer** — flicker-free diff-based redraw, single write
   per frame
 - **Cross-platform** — macOS, Linux, Windows (ANSI terminal required)
@@ -35,7 +34,7 @@ pip install tqrex
 Or for local development:
 
 ```bash
-git clone https://github.com/mikhail-samoilov/tqrex
+git clone https://github.com/Samoilov2004/tqrex.git
 cd tqrex
 pip install -e ".[dev]"
 ```
@@ -44,14 +43,15 @@ pip install -e ".[dev]"
 
 ## Quickstart
 
-### Drop-in replacement for `tqdm`
+### Wrap an iterable
 
 ```python
-import tqrex
-from playgress import track
+import time
+
+from tqrex import track
 
 for item in track(range(100), description="Processing"):
-    tqrex.sleep(0.05)
+    time.sleep(0.05)
 ```
 
 ### Any iterable works
@@ -66,7 +66,7 @@ for f in track(files, description="Crunching files"):
 ### Manual control with the `Progress` context manager
 
 ```python
-from playgress import Progress
+from tqrex import Progress
 
 steps = ["Download", "Extract", "Build", "Install"]
 with Progress(total=len(steps), description="Installing") as p:
@@ -75,15 +75,6 @@ with Progress(total=len(steps), description="Installing") as p:
         run(step)
         p.update(1)
 ```
-
-### Let the AI play for you
-
-```python
-for epoch in track(range(200), description="Training", autoplay=True):
-    train_one_epoch(epoch)
-```
-
----
 
 ## Keyboard controls
 

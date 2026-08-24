@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+from importlib.metadata import version
+
 import pytest
 
+import tqrex
 from tqrex import Progress, track
 from tqrex.config import Theme
 
@@ -31,6 +34,10 @@ def test_track_accepts_generator() -> None:
     gen = (x * 2 for x in range(5))
     result = list(track(gen, total=5, disable=True))
     assert result == [0, 2, 4, 6, 8]
+
+
+def test_package_version_matches_metadata() -> None:
+    assert tqrex.__version__ == version("tqrex")
 
 
 def test_progress_context_manager() -> None:

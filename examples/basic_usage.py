@@ -3,8 +3,7 @@ from __future__ import annotations
 import sys
 import time
 
-from playgress import Progress, track
-from playgress.config import Theme
+from tqrex import Progress, track
 
 
 def example_track() -> None:
@@ -20,10 +19,12 @@ def example_track() -> None:
     for _f in track(files, description="Crunching reports"):
         time.sleep(0.12)  # simulate I/O work
 
+
 def example_range() -> None:
     """Iterate over range(100) — total is inferred automatically."""
     for _i in track(range(100), description="Training epochs"):
         time.sleep(0.05)
+
 
 def example_context() -> None:
     """Use Progress when you control the update timing explicitly."""
@@ -34,17 +35,11 @@ def example_context() -> None:
             time.sleep(0.8)
             p.update(1)
 
-def example_autoplay() -> None:
-    """Let the AI controller play while your batch job runs."""
-    dataset = list(range(80))
-    for _d in track(dataset, description="Embedding vectors", autoplay=True):
-        time.sleep(0.08)
 
 _EXAMPLES: dict[str, tuple[str, object]] = {
-    "track":    ("Process 60 files (default)", example_track),
-    "range":    ("Iterate range(100)",         example_range),
-    "context":  ("Manual Progress manager",    example_context),
-    "autoplay": ("Autoplay AI controller",     example_autoplay),
+    "track": ("Process 60 files (default)", example_track),
+    "range": ("Iterate range(100)", example_range),
+    "context": ("Manual Progress manager", example_context),
 }
 
 if __name__ == "__main__":
